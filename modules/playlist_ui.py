@@ -23,14 +23,17 @@ PLAYLIST_HTML += r'''<script>
 (()=>{
   const controls=document.querySelector('.controls');
   if(!controls)return;
+  const planStyle=document.createElement('style');
+  planStyle.textContent=`.playback-plan{display:flex;align-items:center;justify-content:space-between;gap:22px;width:100%;margin:14px 0 2px;padding:16px 18px;background:#10182a;border:1px solid #30405f;border-radius:12px}.playback-copy{display:grid;gap:3px}.playback-copy b{font-size:16px}.playback-copy small{color:#9aa6bf}.tempo-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.tempo-field{display:grid;gap:3px;color:#9aa6bf;font-size:11px;letter-spacing:.06em;text-transform:uppercase}.tempo-field input{width:104px;font-size:16px;font-weight:700;letter-spacing:0;text-transform:none}.tempo-status{padding:7px 9px;border-radius:999px;background:#1d3951;color:#a9e6ff;font-size:12px;font-weight:700}@media(max-width:800px){.playback-plan{align-items:flex-start;flex-direction:column}.tempo-actions{justify-content:flex-start}}`;
+  document.head.append(planStyle);
+  const playbackPlan=document.createElement('section');
+  playbackPlan.className='playback-plan';
+  playbackPlan.innerHTML=`<div class="playback-copy"><span class="eyebrow">Playback plan</span><b>Plan the set tempo</b><small>Tempo-adjusted energy, timeline spacing, and playable duration update together.</small></div><div class="tempo-actions"><label class="tempo-field">Target BPM <input id="playback-bpm" type="number" min="1" step="0.1" inputmode="decimal" aria-label="Playlist playback BPM"></label><button id="save-playback-bpm" class="primary">Apply target</button><button id="reset-playback-bpm">Use calculated median</button><span id="playback-bpm-status" class="tempo-status"></span></div>`;
   const sort=document.createElement('div');
   sort.className='controls';
   sort.style.width='100%';
   sort.style.marginTop='10px';
-  sort.innerHTML=`<span class="muted">Playback plan:</span>
-    <label class="muted">Target BPM <input id="playback-bpm" type="number" min="1" step="0.1" inputmode="decimal" aria-label="Playlist playback BPM"></label>
-    <button id="save-playback-bpm">Apply target</button><button id="reset-playback-bpm">Use median</button><span id="playback-bpm-status" class="muted"></span>
-    <span class="muted">Playlist order:</span>
+  sort.innerHTML=`<span class="muted">Playlist order:</span>
     <select id="sort-mode" aria-label="Playlist ordering method"><option value="metric">Sort by a metric</option><option value="linear">Propose: rising energy curve</option><option value="u">Propose: U energy curve</option><option value="s">Propose: S energy curve</option></select>
     <span id="metric-sort-controls"><select id="sort-primary" aria-label="Primary sort"><option value="energy">Energy</option><option value="bass">Bass</option><option value="brightness">Brightness</option><option value="rhythm">Rhythm density</option><option value="tempo">Tempo</option></select>
     <select id="sort-secondary" aria-label="Secondary sort"><option value="">No tiebreaker</option><option value="energy">Energy</option><option value="bass">Bass</option><option value="brightness">Brightness</option><option value="rhythm">Rhythm density</option><option value="tempo">Tempo</option></select>
@@ -42,7 +45,8 @@ PLAYLIST_HTML += r'''<script>
   proposal.hidden=true;
   proposal.style.width='100%';
   proposal.style.marginTop='10px';
-  controls.after(sort);
+  controls.after(playbackPlan);
+  playbackPlan.after(sort);
   sort.after(proposal);
   const originalRenderDetail=renderDetail;
   renderDetail=()=>{
@@ -53,7 +57,7 @@ PLAYLIST_HTML += r'''<script>
       input.value=detail?.playbackBpmSource==='user'?detail.playbackBpm:'';
       input.placeholder=detail?.playbackBpm?`${fmt(detail.playbackBpm)} BPM median`:'';
     }
-    if(status)status.textContent=detail?.playbackBpm?`Active: ${fmt(detail.playbackBpm)} BPM (${detail.playbackBpmSource==='user'?'target':'median'})`:'';
+    if(status)status.textContent=detail?.playbackBpm?`${fmt(detail.playbackBpm)} BPM · ${detail.playbackBpmSource==='user'?'your target':'calculated median'}`:'No BPM data';
   };
   const value=(track,key)=>key==='tempo'?track.bpm:key==='energy'?track.playlistEnergy:track.features?.[key];
   const mode=()=>document.getElementById('sort-mode').value;
