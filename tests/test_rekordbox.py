@@ -158,6 +158,32 @@ class RekordboxAnlzParserTest(unittest.TestCase):
 
 
 class RekordboxDatabaseAnalysisReaderTest(unittest.TestCase):
+    def test_filters_content_before_opening_unrequested_analysis_files(self):
+        class Wanted:
+            FolderPath = "/Users/DJ/Wanted.mp3"
+            Filename = "Wanted.mp3"
+
+        class Unwanted:
+            FolderPath = "/Users/DJ/Unwanted.mp3"
+            Filename = "Unwanted.mp3"
+
+        class Database:
+            opened = []
+
+            def get_content(self):
+                return [Unwanted(), Wanted()]
+
+            def read_anlz_file(self, content, analysis_type):
+                self.opened.append((content.Filename, analysis_type))
+                return None
+
+            def get_anlz_paths(self, content):
+                return {}
+
+        reader = RekordboxDatabaseAnalysisReader(database_factory=Database)
+        self.assertEqual(list(reader.iter_analyses({"/Users/DJ/Wanted.mp3"})), [])
+        self.assertEqual(Database.opened, [("Wanted.mp3", "DAT"), ("Wanted.mp3", "EXT")])
+
     def test_reads_only_analysis_linked_by_master_database(self):
         class Content:
             FolderPath = "/Users/DJ/Track One.mp3"

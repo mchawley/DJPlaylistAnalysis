@@ -17,18 +17,30 @@ class RekordboxDatabaseAnalysisReader:
         self.errors = []
         logging.getLogger("pyrekordbox.anlz.file").setLevel(logging.ERROR)
 
-    def read(self):
-        return dict(self.iter_analyses())
+    def read(self, locations=None):
+        return dict(self.iter_analyses(locations))
 
-    def iter_analyses(self):
-        """Yield one linked track analysis at a time to keep memory bounded."""
+    def iter_analyses(self, locations=None):
+        """Yield analysis only for requested locations, one record at a time.
+
+        Rekordbox's public database wrapper can enumerate all content records,
+        but it cannot efficiently request ANLZ files by a list of file paths.
+        Filtering immediately after reading the lightweight location avoids
+        opening or parsing DAT/EXT files for unrelated library tracks.
+        """
         database = (self.database_factory or self._load_database_factory())()
         parser = RekordboxAnlzParser()
         self.errors = []
+        wanted = (
+            {self._normalise_path(location) for location in locations}
+            if locations is not None else None
+        )
 
         for content in database.get_content():
             location = self._content_path(content)
             if not location:
+                continue
+            if wanted is not None and self._normalise_path(location) not in wanted:
                 continue
             analysis = None
             # Rekordbox 7's 2EX/3EX files are not decoded by pyrekordbox 0.4.x.
@@ -119,6 +131,10 @@ class RekordboxDatabaseAnalysisReader:
         if filename and Path(str(path)).name != filename:
             return str(Path(str(path)) / filename)
         return str(path)
+
+    @staticmethod
+    def _normalise_path(path):
+        return str(Path(path)).replace("\\", "/").casefold()
 
 
 class RekordboxDatabaseLibraryReader:

@@ -305,25 +305,35 @@ class Pipeline:
 
     @classmethod
     def _import_rekordbox_analyses(cls, track_ids_by_path, json_manager, importer, log):
-        """Stream analysis records and persist matching documents immediately."""
+        """Stream only pending, matching analysis records and persist them immediately."""
         imported = 0
         skipped = 0
+        pending_track_ids_by_path = {}
+        for location, track_id in track_ids_by_path.items():
+            document = json_manager.load(track_id)
+            if cls._module_is_current(
+                document, "rekordbox_analysis", cls.REKORDBOX_ANALYSIS_VERSION
+            ):
+                skipped += 1
+            else:
+                pending_track_ids_by_path[location] = track_id
+        if not pending_track_ids_by_path:
+            log.info("Rekordbox analysis is already current for all matching tracks")
+            return imported, skipped
         try:
             reader = RekordboxDatabaseAnalysisReader()
-            analyses = reader.iter_analyses()
-            log.info("Streaming Rekordbox analysis...")
+            analyses = reader.iter_analyses(pending_track_ids_by_path)
+            log.info(
+                "Streaming Rekordbox analysis for "
+                f"{len(pending_track_ids_by_path)} matching tracks..."
+            )
             with tqdm(analyses, desc="Importing Rekordbox analysis", unit="track") as progress:
                 for location, analysis in progress:
                     progress.set_postfix_str(Path(location).name, refresh=False)
-                    track_id = track_ids_by_path.get(cls._normalise_path(location))
+                    track_id = pending_track_ids_by_path.get(cls._normalise_path(location))
                     if track_id is None:
                         continue
                     document = json_manager.load(track_id)
-                    if cls._module_is_current(
-                        document, "rekordbox_analysis", cls.REKORDBOX_ANALYSIS_VERSION
-                    ):
-                        skipped += 1
-                        continue
                     importer.import_analysis(document, analysis)
                     cls._mark_module_complete(
                         document, "rekordbox_analysis", cls.REKORDBOX_ANALYSIS_VERSION
