@@ -245,6 +245,7 @@ class InsightsHandler(BaseHTTPRequestHandler):
             "id": playlist_id, "name": playlist["name"], "source": playlist.get("source", "custom"),
             "tracks": tracks,
             "chartTracks": playable,
+            "playableDuration": sum(track["duration"] for track in playable),
             "trends": {key: self._normalize([track["features"].get(key) for track in playable]) for key in ("energy", "bass", "rhythm", "brightness", "tempo")},
             "raw_trends": {key: [track["features"].get(key) for track in playable] for key in ("energy", "bass", "rhythm", "brightness", "tempo")},
         }

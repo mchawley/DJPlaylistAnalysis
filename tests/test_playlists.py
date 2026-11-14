@@ -155,6 +155,7 @@ class PlaylistApiTest(unittest.TestCase):
         self.assertEqual(detail["tracks"][2]["bpm"], 138)
         self.assertEqual(detail["tracks"][0]["duration"], 240)
         self.assertEqual(detail["tracks"][0]["trackDuration"], 240)
+        self.assertEqual(detail["playableDuration"], 720)
         self.assertEqual(len(detail["trends"]["energy"]), 3)
         self.assertEqual(detail["tracks"][0]["segments"][0]["type"], "CUSTOM")
         self.assertEqual(detail["tracks"][0]["segments"][0]["normalized_energy"], 0.5)

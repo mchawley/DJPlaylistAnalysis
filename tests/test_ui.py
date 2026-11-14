@@ -137,6 +137,8 @@ class InsightsHandlerTest(unittest.TestCase):
         self.assertNotIn('id="toggle-flow"', PLAYLIST_HTML)
         self.assertNotIn("function playlistSegmentCurve", PLAYLIST_HTML)
         self.assertIn("segment_index:segmentIndex", PLAYLIST_HTML)
+        self.assertIn("Approx. playable time", PLAYLIST_HTML)
+        self.assertIn("clock(detail.playableDuration)", PLAYLIST_HTML)
 
     def test_playlist_ui_supports_metric_sorting_with_a_tiebreaker(self):
         from modules.playlist_ui import PLAYLIST_HTML
