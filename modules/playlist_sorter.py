@@ -19,7 +19,9 @@ class PlaylistSorter:
         unavailable = [track for track in tracks if not track.get("playable")]
         if not available:
             return {"curve": curve, "score": 0.0, "target": [], "tracks": unavailable}
-        for track, energy in zip(available, self._normalize([item["features"].get("energy") for item in available])):
+        for track, energy in zip(available, self._normalize([
+            item.get("playlistEnergy", item["features"].get("energy")) for item in available
+        ])):
             track["_sort_energy"] = energy
         target = self.targets(curve, len(available))
         beams = [([], frozenset(), 0.0)]

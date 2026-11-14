@@ -43,6 +43,13 @@ class PlaylistStoreTest(unittest.TestCase):
             playlist = store.create("Set", ["third", "first", "second"])
             self.assertEqual(playlist["trackIds"], ["third", "first", "second"])
 
+    def test_playlist_playback_bpm_can_be_set_or_reset(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = PlaylistStore(Path(directory) / "output" / "tracks")
+            playlist = store.create("Set", ["one"])
+            self.assertEqual(store.update(playlist["id"], playback_bpm=126)["playbackBpm"], 126)
+            self.assertNotIn("playbackBpm", store.update(playlist["id"], playback_bpm=None))
+
     def test_segment_edit_creates_a_local_copy_and_translates_source_entry(self):
         with tempfile.TemporaryDirectory() as directory:
             store = PlaylistStore(Path(directory) / "output" / "tracks")
@@ -156,6 +163,17 @@ class PlaylistApiTest(unittest.TestCase):
         self.assertEqual(detail["tracks"][0]["duration"], 240)
         self.assertEqual(detail["tracks"][0]["trackDuration"], 240)
         self.assertEqual(detail["playableDuration"], 720)
+        self.assertEqual(detail["playbackBpm"], 122)
+        self.assertEqual(detail["playbackBpmSource"], "median")
+        self.assertGreater(detail["tracks"][0]["playlistEnergy"], detail["tracks"][0]["features"]["energy"])
+
+    def test_playlist_energy_uses_user_playback_bpm(self):
+        playlist_id = PlaylistStore(self.output).local_playlists()[0]["id"]
+        PlaylistStore(self.output).update(playlist_id, playback_bpm=126)
+        detail = InsightsHandler._playlist_detail(InsightsHandler.__new__(InsightsHandler), playlist_id)
+        self.assertEqual(detail["playbackBpm"], 126)
+        self.assertEqual(detail["playbackBpmSource"], "user")
+        self.assertGreater(detail["tracks"][0]["playlistEnergy"], detail["tracks"][0]["features"]["energy"])
         self.assertEqual(len(detail["trends"]["energy"]), 3)
         self.assertEqual(detail["tracks"][0]["segments"][0]["type"], "CUSTOM")
         self.assertEqual(detail["tracks"][0]["segments"][0]["normalized_energy"], 0.5)

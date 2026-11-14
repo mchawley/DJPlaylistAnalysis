@@ -185,6 +185,7 @@ class InsightsHandler(BaseHTTPRequestHandler):
             return self._json(store.update(
                 payload.get("playlist_id", ""), payload.get("name"), payload.get("track_ids"),
                 payload.get("entry_ids"),
+                payload["playback_bpm"] if "playback_bpm" in payload else PlaylistStore.UNSET,
             ) or {})
         if action == "restore":
             return self._json(store.restore(payload.get("playlist_id", "")) or {})
@@ -232,6 +233,15 @@ class InsightsHandler(BaseHTTPRequestHandler):
         selections = SegmentSelectionStore(self.output_root)
         tracks = [self._playlist_track(entry["trackId"], entry["id"], selections.excluded(entry["trackId"])) for entry in store.entries(playlist)]
         playable = [track for track in tracks if track["playable"]]
+        bpm_values = [track["bpm"] for track in playable if isinstance(track.get("bpm"), (int, float)) and track["bpm"] > 0]
+        configured_bpm = playlist.get("playbackBpm")
+        playback_bpm = configured_bpm if isinstance(configured_bpm, (int, float)) and configured_bpm > 0 else (median(bpm_values) if bpm_values else None)
+        for track in playable:
+            raw_energy = track["features"].get("energy")
+            original_bpm = track.get("bpm")
+            multiplier = self._tempo_energy_multiplier(original_bpm, playback_bpm)
+            track["tempoEnergyMultiplier"] = multiplier
+            track["playlistEnergy"] = raw_energy * multiplier if isinstance(raw_energy, (int, float)) else None
         previous = None
         for track in tracks:
             if not track["playable"]:
@@ -246,9 +256,20 @@ class InsightsHandler(BaseHTTPRequestHandler):
             "tracks": tracks,
             "chartTracks": playable,
             "playableDuration": sum(track["duration"] for track in playable),
-            "trends": {key: self._normalize([track["features"].get(key) for track in playable]) for key in ("energy", "bass", "rhythm", "brightness", "tempo")},
-            "raw_trends": {key: [track["features"].get(key) for track in playable] for key in ("energy", "bass", "rhythm", "brightness", "tempo")},
+            "playbackBpm": playback_bpm,
+            "playbackBpmSource": "user" if playback_bpm is not None and playback_bpm == configured_bpm else "median",
+            "trends": {key: self._normalize([track["playlistEnergy"] if key == "energy" else track["features"].get(key) for track in playable]) for key in ("energy", "bass", "rhythm", "brightness", "tempo")},
+            "raw_trends": {key: [track["playlistEnergy"] if key == "energy" else track["features"].get(key) for track in playable] for key in ("energy", "bass", "rhythm", "brightness", "tempo")},
         }
+
+    @staticmethod
+    def _tempo_energy_multiplier(original_bpm, playback_bpm):
+        """Apply a restrained rhythmic-momentum adjustment for playlist planning."""
+        if not isinstance(original_bpm, (int, float)) or original_bpm <= 0:
+            return 1.0
+        if not isinstance(playback_bpm, (int, float)) or playback_bpm <= 0:
+            return 1.0
+        return max(0.85, min(1.15, 1 + 0.5 * (playback_bpm / original_bpm - 1)))
 
     def _playlist_proposal(self, playlist_id, curve):
         """Return a suggested order only; no playlist data is changed here."""

@@ -5,8 +5,12 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+_UNSET = object()
+
 
 class PlaylistStore:
+    UNSET = _UNSET
+
     def __init__(self, output_directory):
         root = Path(output_directory).parent
         self.source_path = root / "rekordbox_playlists.json"
@@ -64,7 +68,7 @@ class PlaylistStore:
             for index, track_id in enumerate(playlist.get("trackIds", []))
         ]
 
-    def update(self, playlist_id, name=None, track_ids=None, entry_ids=None):
+    def update(self, playlist_id, name=None, track_ids=None, entry_ids=None, playback_bpm=_UNSET):
         playlists = self.local_playlists()
         playlist = next((item for item in playlists if item["id"] == playlist_id), None)
         if playlist is None:
@@ -86,6 +90,15 @@ class PlaylistStore:
         self._materialize_entries(playlist)
         if name is not None:
             playlist["name"] = str(name).strip() or playlist["name"]
+        if playback_bpm is not _UNSET:
+            try:
+                value = float(playback_bpm) if playback_bpm is not None else None
+            except (TypeError, ValueError):
+                value = None
+            if value is not None and value > 0:
+                playlist["playbackBpm"] = value
+            else:
+                playlist.pop("playbackBpm", None)
         if entry_ids is not None:
             by_id = {item["id"]: item for item in playlist["entries"]}
             playlist["entries"] = [by_id[item_id] for item_id in entry_ids if item_id in by_id]

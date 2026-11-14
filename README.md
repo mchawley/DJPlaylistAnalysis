@@ -136,6 +136,10 @@ Open **Tracks** to search your analyzed library.
 Open **Playlists** to view imported Rekordbox playlists or create a local CrateIQ playlist.
 
 - Review energy, bass, rhythm density, brightness, and tempo across the order.
+- Set an optional **Playback BPM** for the set. When left blank, CrateIQ uses
+  the median BPM of playable tracks. The playlist energy curve and energy-shape
+  proposals then make a restrained adjustment for tracks you plan to speed up
+  or slow down; raw Track Analysis energy is never changed.
 - Look for transition-break or outlier badges.
 - Use segment strips to exclude phrases you do not plan to play.
 - Reorder, remove, or add tracks to local playlist copies without changing Rekordbox.
