@@ -242,6 +242,9 @@ class InsightsHandler(BaseHTTPRequestHandler):
             multiplier = self._tempo_energy_multiplier(original_bpm, playback_bpm)
             track["tempoEnergyMultiplier"] = multiplier
             track["playlistEnergy"] = raw_energy * multiplier if isinstance(raw_energy, (int, float)) else None
+            track["playbackDuration"] = self._playback_duration(
+                track["duration"], original_bpm, playback_bpm
+            )
         previous = None
         for track in tracks:
             if not track["playable"]:
@@ -255,7 +258,8 @@ class InsightsHandler(BaseHTTPRequestHandler):
             "id": playlist_id, "name": playlist["name"], "source": playlist.get("source", "custom"),
             "tracks": tracks,
             "chartTracks": playable,
-            "playableDuration": sum(track["duration"] for track in playable),
+            "playableDuration": sum(track["playbackDuration"] for track in playable),
+            "rawPlayableDuration": sum(track["duration"] for track in playable),
             "playbackBpm": playback_bpm,
             "playbackBpmSource": "user" if playback_bpm is not None and playback_bpm == configured_bpm else "median",
             "trends": {key: self._normalize([track["playlistEnergy"] if key == "energy" else track["features"].get(key) for track in playable]) for key in ("energy", "bass", "rhythm", "brightness", "tempo")},
@@ -270,6 +274,16 @@ class InsightsHandler(BaseHTTPRequestHandler):
         if not isinstance(playback_bpm, (int, float)) or playback_bpm <= 0:
             return 1.0
         return max(0.85, min(1.15, 1 + 0.5 * (playback_bpm / original_bpm - 1)))
+
+    @staticmethod
+    def _playback_duration(duration, original_bpm, playback_bpm):
+        if not isinstance(duration, (int, float)):
+            return 0.0
+        if not isinstance(original_bpm, (int, float)) or original_bpm <= 0:
+            return duration
+        if not isinstance(playback_bpm, (int, float)) or playback_bpm <= 0:
+            return duration
+        return duration * original_bpm / playback_bpm
 
     def _playlist_proposal(self, playlist_id, curve):
         """Return a suggested order only; no playlist data is changed here."""

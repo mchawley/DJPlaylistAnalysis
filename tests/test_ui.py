@@ -143,6 +143,9 @@ class InsightsHandlerTest(unittest.TestCase):
         self.assertIn("save-playback-bpm", PLAYLIST_HTML)
         self.assertIn("Playlist energy (tempo-adjusted)", PLAYLIST_HTML)
         self.assertIn("key==='energy'?track.playlistEnergy", PLAYLIST_HTML)
+        self.assertIn("track.playbackDuration??track.duration", PLAYLIST_HTML)
+        self.assertIn("cache:'no-store'", PLAYLIST_HTML)
+        self.assertIn("playback-bpm-status", PLAYLIST_HTML)
 
     def test_playlist_ui_supports_metric_sorting_with_a_tiebreaker(self):
         from modules.playlist_ui import PLAYLIST_HTML
