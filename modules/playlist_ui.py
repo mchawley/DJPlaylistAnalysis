@@ -24,13 +24,21 @@ PLAYLIST_HTML += r'''<script>
   const controls=document.querySelector('.controls');
   if(!controls)return;
   const planStyle=document.createElement('style');
-  planStyle.textContent=`.playback-plan{display:flex;align-items:center;justify-content:space-between;gap:22px;width:100%;margin:14px 0 2px;padding:16px 18px;background:#10182a;border:1px solid #30405f;border-radius:12px}.playback-copy{display:grid;gap:3px}.playback-copy b{font-size:16px}.playback-copy small{color:#9aa6bf}.tempo-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.tempo-field{display:grid;gap:3px;color:#9aa6bf;font-size:11px;letter-spacing:.06em;text-transform:uppercase}.tempo-field input{width:104px;font-size:16px;font-weight:700;letter-spacing:0;text-transform:none}.tempo-status{padding:7px 9px;border-radius:999px;background:#1d3951;color:#a9e6ff;font-size:12px;font-weight:700}@media(max-width:800px){.playback-plan{align-items:flex-start;flex-direction:column}.tempo-actions{justify-content:flex-start}}`;
+  planStyle.textContent=`.playlist-control-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}.control-card{min-width:0;padding:16px 18px;background:#10182a;border:1px solid #30405f;border-radius:12px}.control-card-heading{display:grid;gap:3px;margin-bottom:12px}.control-card-heading b{font-size:16px}.control-card-heading small{color:#9aa6bf}.playlist-card-controls{display:grid;grid-template-columns:1fr auto auto;gap:8px}.playlist-card-controls select{min-width:0;width:100%}.playlist-card-controls button{padding:9px}.playback-plan{display:grid;gap:12px}.playback-copy{display:grid;gap:3px}.playback-copy b{font-size:16px}.playback-copy small{color:#9aa6bf}.tempo-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.tempo-field{display:grid;gap:3px;color:#9aa6bf;font-size:11px;letter-spacing:.06em;text-transform:uppercase}.tempo-field input{width:104px;font-size:16px;font-weight:700;letter-spacing:0;text-transform:none}.tempo-status{padding:7px 9px;border-radius:999px;background:#1d3951;color:#a9e6ff;font-size:12px;font-weight:700}.order-plan{display:grid!important;grid-template-columns:1fr;align-content:start;gap:8px!important;margin:0!important}.order-plan select{min-width:0!important;width:100%}.order-plan #metric-sort-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.order-plan #sort-playlist{justify-self:start}@media(max-width:1050px){.playlist-control-grid{grid-template-columns:1fr}.playlist-card-controls{grid-template-columns:1fr auto auto auto auto}}@media(max-width:800px){.playlist-card-controls,.order-plan #metric-sort-controls{grid-template-columns:1fr}.tempo-actions{justify-content:flex-start}}`;
   document.head.append(planStyle);
+  const controlGrid=document.createElement('div');
+  controlGrid.className='playlist-control-grid';
+  const playlistPlan=document.createElement('section');
+  playlistPlan.className='control-card';
+  playlistPlan.innerHTML=`<div class="control-card-heading"><span class="eyebrow">Playlist</span><b>Choose your working playlist</b><small>Create, rename, restore, or edit its local copy.</small></div>`;
+  controls.classList.add('playlist-card-controls');
+  controls.before(controlGrid);
+  playlistPlan.append(controls);
   const playbackPlan=document.createElement('section');
-  playbackPlan.className='playback-plan';
+  playbackPlan.className='playback-plan control-card';
   playbackPlan.innerHTML=`<div class="playback-copy"><span class="eyebrow">Playback plan</span><b>Plan the set tempo</b><small>Tempo-adjusted energy, timeline spacing, and playable duration update together.</small></div><div class="tempo-actions"><label class="tempo-field">Target BPM <input id="playback-bpm" type="number" min="1" step="0.1" inputmode="decimal" aria-label="Playlist playback BPM"></label><button id="save-playback-bpm" class="primary">Apply target</button><button id="reset-playback-bpm">Use calculated median</button><span id="playback-bpm-status" class="tempo-status"></span></div>`;
   const sort=document.createElement('div');
-  sort.className='controls';
+  sort.className='controls control-card order-plan';
   sort.style.width='100%';
   sort.style.marginTop='10px';
   sort.innerHTML=`<span class="muted">Playlist order:</span>
@@ -45,9 +53,8 @@ PLAYLIST_HTML += r'''<script>
   proposal.hidden=true;
   proposal.style.width='100%';
   proposal.style.marginTop='10px';
-  controls.after(playbackPlan);
-  playbackPlan.after(sort);
-  sort.after(proposal);
+  controlGrid.append(playlistPlan,playbackPlan,sort);
+  controlGrid.after(proposal);
   const originalRenderDetail=renderDetail;
   renderDetail=()=>{
     originalRenderDetail();

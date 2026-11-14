@@ -146,9 +146,12 @@ class InsightsHandlerTest(unittest.TestCase):
         self.assertIn("track.playbackDuration??track.duration", PLAYLIST_HTML)
         self.assertIn("cache:'no-store'", PLAYLIST_HTML)
         self.assertIn("playback-bpm-status", PLAYLIST_HTML)
-        self.assertIn("playbackPlan.className='playback-plan'", PLAYLIST_HTML)
+        self.assertIn("playbackPlan.className='playback-plan control-card'", PLAYLIST_HTML)
         self.assertIn("Plan the set tempo", PLAYLIST_HTML)
         self.assertIn("Use calculated median", PLAYLIST_HTML)
+        self.assertIn("playlist-control-grid", PLAYLIST_HTML)
+        self.assertIn("Choose your working playlist", PLAYLIST_HTML)
+        self.assertIn("control-card order-plan", PLAYLIST_HTML)
 
     def test_playlist_ui_supports_metric_sorting_with_a_tiebreaker(self):
         from modules.playlist_ui import PLAYLIST_HTML
