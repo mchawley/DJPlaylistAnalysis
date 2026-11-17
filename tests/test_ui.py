@@ -63,6 +63,15 @@ class InsightsHandlerTest(unittest.TestCase):
         self.assertIn("function setGlobalSegment", HTML)
         self.assertIn("/api/segments", HTML)
 
+    def test_track_ui_uses_a_scrollable_readable_timeline(self):
+        self.assertIn('id="timeline-scroller"', HTML)
+        self.assertIn("min-width:72px", HTML)
+        self.assertIn("function scrollSelectedTimeline", HTML)
+        self.assertIn("function updateTimelineOverflow", HTML)
+        self.assertIn('id="timeline-start"', HTML)
+        self.assertIn('id="timeline-selected"', HTML)
+        self.assertIn('id="timeline-end"', HTML)
+
     def test_catalog_returns_manifest_title_and_artist_with_fallback(self):
         with tempfile.TemporaryDirectory() as directory:
             output_root = Path(directory) / "output" / "tracks"
