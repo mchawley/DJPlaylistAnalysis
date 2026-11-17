@@ -68,6 +68,8 @@ class InsightsHandlerTest(unittest.TestCase):
         self.assertIn("min-width:72px", HTML)
         self.assertIn("function scrollSelectedTimeline", HTML)
         self.assertIn("function updateTimelineOverflow", HTML)
+        self.assertIn("TIMELINE_PIXELS_PER_SECOND=5", HTML)
+        self.assertIn("function segmentDuration", HTML)
         self.assertIn('id="timeline-start"', HTML)
         self.assertIn('id="timeline-selected"', HTML)
         self.assertIn('id="timeline-end"', HTML)
